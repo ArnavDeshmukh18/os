@@ -1,0 +1,139 @@
+// Name :- Kaushal Bharambe
+// Roll no :- TYITA012
+// OS assignment 3 (code +printout)
+// Program
+#include <iostream>
+using namespace std;
+struct process
+{
+	int id;
+	int arrival_time;
+	int burst_time;
+	int start_time;
+	int end_time;
+	int tot;
+	int waiting_time;
+};
+void input(int n, process processes[])
+{
+	for (int i = 0; i < n; i++)
+	{
+		cout << "\nEnter process ID: ";
+		cin >> processes[i].id;
+		cout << "Enter arrival time: ";
+		cin >> processes[i].arrival_time;
+		cout << "Enter burst time: ";
+		cin >> processes[i].burst_time;
+	}
+}
+void output(int n, process processes[])
+{
+	cout << "ID\tAT\tBT\tST\tET\tTOT\tWT\n";
+	for (int i = 0; i < n; i++)
+	{
+		cout << processes[i].id << "\t" << processes[i].arrival_time << "\t" << processes[i].burst_time << "\t" << processes[i].start_time << "\t" << processes[i].end_time
+			 << "\t" << processes[i].tot << "\t" << processes[i].waiting_time << endl;
+	}
+	double sum1 = 0, sum2 = 0;
+	for (int i = 0; i < n; i++)
+	{
+		sum1 += processes[i].tot;
+		sum2 += processes[i].waiting_time;
+	}
+	cout << "Average Turn around time :- " << sum1 / n << "\n";
+	cout << "Average Waiting time :- " << sum2 / n << "\n";
+}
+void first_come_first_serve(int n, process processes[])
+{
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = i + 1; j < n; j++)
+		{
+			if (processes[i].arrival_time > processes[j].arrival_time)
+			{
+				process temp = processes[i];
+				processes[i] = processes[j];
+				processes[j] = temp;
+			}
+		}
+	}
+	for (int i = 0; i < n; i++)
+	{
+		if (i == 0)
+			processes[i].start_time = processes[i].arrival_time;
+		else if (processes[i - 1].end_time >= processes[i].arrival_time)
+			processes[i].start_time = processes[i - 1].end_time;
+		else
+			processes[i].start_time = processes[i].arrival_time;
+		processes[i].end_time = processes[i].start_time + processes[i].burst_time;
+		processes[i].tot = processes[i].end_time - processes[i].arrival_time;
+		processes[i].waiting_time = processes[i].tot - processes[i].burst_time;
+	}
+}
+void round_robin(int n, process processes[], int time_quantum)
+{
+	for (int i = 0; i < n; i++)
+	{
+		for (int j = i + 1; j < n; j++)
+		{
+			if (processes[i].arrival_time > processes[j].arrival_time)
+			{
+				process temp = processes[i];
+				processes[i] = processes[j];
+				processes[j] = temp;
+			}
+		}
+	}
+	int rem_bt[n]; // remaining burst time of processes
+	for (int i = 0; i < n; i++)
+		rem_bt[i] = processes[i].burst_time;
+	int t = 0; // Current time
+	while (1)
+	{
+		bool done = true;
+		for (int i = 0; i < n; i++)
+		{
+			if (rem_bt[i] == processes[i].burst_time && processes[i].arrival_time <= t)
+				processes[i].start_time = t;
+			if (rem_bt[i] > 0 && processes[i].arrival_time <= t)
+			{
+				done = false; // There is a pending process
+				if (rem_bt[i] > time_quantum)
+				{
+					t += time_quantum;
+					rem_bt[i] -= time_quantum;
+				}
+				else
+				{
+					t = t + rem_bt[i];
+					rem_bt[i] = 0;
+					processes[i].end_time = t;
+				}
+			}
+		}
+		// If all processes are done
+		if (done == true)
+			break;
+	}
+	for (int i = 0; i < n; i++)
+	{
+		processes[i].tot = processes[i].end_time - processes[i].arrival_time;
+		processes[i].waiting_time = processes[i].tot - processes[i].burst_time;
+	}
+}
+int main()
+{
+	int n;
+	cout << "Enter number of processes: ";
+	cin >> n;
+	process processes[n];
+	input(n, processes);
+	first_come_first_serve(n, processes);
+	cout << "____________________________________________________________" << endl;
+	cout << "First Come First Serve Algorithm:" << endl;
+	output(n, processes);
+	cout << "____________________________________________________________" << endl;
+	cout << "Round Robin Algorithm:" << endl;
+	round_robin(n, processes, 2);
+	output(n, processes);
+}
